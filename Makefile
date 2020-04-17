@@ -3,7 +3,7 @@
 CC = g++
 CFLAGS = -Wall -g -std=c++11
 
-main: ping.cpp
+ping: ping.cpp
 	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
