@@ -106,7 +106,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     int ttl_val = ttl, msg_count = 0, i, addr_len, flag = 1,
             msg_received_count = 0;
     // used to calc stats at the end
-    float min, max, avg, sum_sq = 0;
+    float min, max, avg, sum_sq, sum = 0;
     // checks if it is the first ping
     int first = 1;
     struct ping_pkt pckt;
@@ -196,7 +196,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
                             min = rtt_msec;
                         }
                     }
-                    avg = (avg + rtt_msec) / msg_count;
+                    sum += rtt_msec;
                     sum_sq += rtt_msec * rtt_msec;
                     printf("%d bytes from %s icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
                            ping_ip, msg_count, ttl_val, rtt_msec);
@@ -213,9 +213,10 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     total_msec = (tfe.tv_sec - tfs.tv_sec) * 1000.0 + timeElapsed;
 
     printf("\n===%s ping statistics===\n", ping_ip);
-    printf("\n%d packets sent, %d packets received, %0.2f %% packet loss. Total time: %Lf ms.\n\n ", msg_count,
+    printf("\n%d packets sent, %d packets received, %0.2f %% packet loss. Total time: %Lf ms.\n\n", msg_count,
            msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100.0, total_msec);
-    printf("round-trip min/avg/max/stddev = %0.3f/%0.3f/%0.3f/%0.3f ms\n", min, avg, max,
+    avg = sum / msg_count;
+    printf("round-trip min/avg/max/stddev = %0.3f/%0.3f/%0.3f/%0.3f ms\n\n", min, avg, max,
            sqrt(sum_sq / msg_count - (avg * avg)));
 }
 
