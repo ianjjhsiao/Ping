@@ -116,9 +116,9 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     struct timespec time_start, time_end, tfs, tfe;
     long double rtt_msec = 0, total_msec = 0;
     struct timeval tv_out;
-    tv_out.tv_sec = time_out;
 
-//    tv_out.tv_usec = time_out;
+    tv_out.tv_sec = time_out;
+    tv_out.tv_usec = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &tfs);
 
@@ -171,10 +171,11 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
 
         if (recvfrom(ping_sockfd, &pckt, sizeof(pckt), 0, reinterpret_cast<sockaddr*> (&r_addr),
                      reinterpret_cast<socklen_t*>(&addr_len)) <= 0 && msg_count > 1) {
-            printf("\nPacket receive failed!\n");
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                cout << "Timeout" << endl;
+                cout << "Request timeout for icmp_seq " << msg_count << endl;
                 continue;
+            } else {
+                printf("\nPacket receive failed!\n");
             }
         } else {
             clock_gettime(CLOCK_MONOTONIC, &time_end);
@@ -213,7 +214,7 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in addr_con;
 
     if (argc < 2 || argc > 4) {
-        cout << "Format " << argv[0] << " <hostname or IP address> <optional: timeout in seconds>" << endl;
+        cout << "Format " << argv[0] << " <hostname or IP address> <optional: timeout in seconds> <optional: ttl>" << endl;
         return 0;
     }
     // default timeout is 1 second
