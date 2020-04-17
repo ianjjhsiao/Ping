@@ -180,8 +180,8 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
                 if ((pckt.hdr.type != 69 || pckt.hdr.code != 0)) {
                     printf("Error..Packet received with ICMP type %d code %d\n", pckt.hdr.type, pckt.hdr.code);
                 } else {
-                    printf("%d bytes from %s (h: %s) (ip: %s) icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
-                           ping_dom, rev_host, ping_ip, msg_count, ttl_val, rtt_msec);
+                    printf("%d bytes from %s icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
+                           ping_ip, msg_count, ttl_val, rtt_msec);
 
                     msg_received_count++;
                 }
@@ -201,11 +201,12 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
 
 int main(int argc, char* argv[]) {
     int sockfd, time_out, ttl;
-    char* ip_addr, * reverse_hostname;
+    char* ip_addr, * domain_name;
     struct sockaddr_in addr_con;
 
     if (argc < 2 || argc > 4) {
-        cout << "Format " << argv[0] << " <hostname or IP address> <optional: timeout in seconds> <optional: ttl>" << endl;
+        cout << "Format " << argv[0] << " <hostname or IP address> <optional: timeout in seconds> <optional: ttl>"
+             << endl;
         return 0;
     }
     // default timeout is 1 second
@@ -228,8 +229,12 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    reverse_hostname = reverse_dns_lookup(ip_addr);
-    cout << "\nTrying to connect to '" << argv[1] << "' IP: " << ip_addr << endl;
+    domain_name = reverse_dns_lookup(ip_addr);
+    cout << "\nTrying to connect to '" << argv[1] << endl;
+
+    // print other info
+
+    cout << "IP: " << ip_addr << " domain name: " << domain_name << endl;
 
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
@@ -241,8 +246,8 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, intHandler);
 
     //send pings continuously
-    send_ping(sockfd, &addr_con, reverse_hostname,
-              ip_addr, argv[1], time_out, ttl);
+    send_ping(sockfd, &addr_con, domain_name, ip_addr,
+              argv[1], time_out, ttl);
 
     return 0;
 } 
