@@ -30,10 +30,6 @@ using namespace std;
 // Ping rate in microseconds
 #define PING_RATE 1000000
 
-// Gives the timeout delay for receiving packets 
-// in seconds 
-#define RECV_TIMEOUT 1
-
 // Define the Ping Loop 
 int pingloop = 1;
 
@@ -111,7 +107,7 @@ char* reverse_dns_lookup(char* ip_addr) {
 
 // make a ping request
 void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
-               char* ping_dom, char* ping_ip, char* rev_host) {
+               char* ping_dom, char* ping_ip, char* rev_host, int time_out) {
     int ttl_val = 64, msg_count = 0, i, addr_len, flag = 1,
             msg_received_count = 0;
 
@@ -120,7 +116,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     struct timespec time_start, time_end, tfs, tfe;
     long double rtt_msec = 0, total_msec = 0;
     struct timeval tv_out;
-    tv_out.tv_sec = RECV_TIMEOUT;
+    tv_out.tv_sec = time_out;
     tv_out.tv_usec = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &tfs);
@@ -207,15 +203,18 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
 
 // Driver Code
 int main(int argc, char* argv[]) {
-    int sockfd;
+    int sockfd, time_out;
     char* ip_addr, * reverse_hostname;
     struct sockaddr_in addr_con;
-//    int addrlen = sizeof(addr_con);
-//    char net_buf[NI_MAXHOST];
 
-    if (argc != 2) {
-        cout << "Format " << argv[0] << " <hostname or IP address>" << endl;
+    if (argc != 2 && argc != 3) {
+        cout << "Format " << argv[0] << " <hostname or IP address> <optional: timeout in seconds>" << endl;
         return 0;
+    }
+    time_out = 1;
+    if (argc == 3) {
+        time_out = atoi(argv[2]);
+        cout << "time: " << time_out << endl;
     }
 
     ip_addr = dns_lookup(argv[1], &addr_con);
@@ -226,21 +225,19 @@ int main(int argc, char* argv[]) {
 
     reverse_hostname = reverse_dns_lookup(ip_addr);
     cout << "\nTrying to connect to '" << argv[1] << "' IP: " << ip_addr << endl;
-//    cout << "\nReverse Lookup domain: " << reverse_hostname << endl;
 
-    sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (sockfd < 0) {
         printf("\nSocket file descriptor not received!!\n");
         return 0;
-    } else {
-        printf("\nSocket file descriptor %d received\n", sockfd);
     }
 
-    signal(SIGINT, intHandler); //catches interrupt
+    //catches interrupt
+    signal(SIGINT, intHandler);
 
     //send pings continuously
     send_ping(sockfd, &addr_con, reverse_hostname,
-              ip_addr, argv[1]);
+              ip_addr, argv[1], time_out);
 
     return 0;
 } 
