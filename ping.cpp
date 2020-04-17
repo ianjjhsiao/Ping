@@ -247,6 +247,7 @@ int main(int argc, char* argv[]) {
     ip_addr = dns_lookup(argv[1], &addr_con);
     if (ip_addr == NULL) {
         cout << ("\nDNS lookup failed! Could not resolve hostname!\n");
+        ping = 0;
         return 0;
     }
 
@@ -260,6 +261,7 @@ int main(int argc, char* argv[]) {
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
         printf("\nSocket file descriptor not received!!\n");
+        ping = 0;
         return 0;
     }
 
