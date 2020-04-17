@@ -1,7 +1,3 @@
-// C++ program to Implement Ping
-
-// run as sudo ./ping <hostname> 
-
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -30,8 +26,8 @@ using namespace std;
 // Ping rate in microseconds
 #define PING_RATE 1000000
 
-// Define the Ping Loop 
-int pingloop = 1;
+// ping while true
+int ping = 1;
 
 
 // ping packet structure
@@ -60,7 +56,7 @@ unsigned short checksum(void* b, int len) {
 
 // Interrupt handler 
 void intHandler(int dummy) {
-    pingloop = 0;
+    ping = 0;
 }
 
 // Performs a DNS lookup  
@@ -80,9 +76,7 @@ char* dns_lookup(char* addr_host, struct sockaddr_in* addr_con) {
     (*addr_con).sin_family = host_entity->h_addrtype;
     (*addr_con).sin_port = htons (PORT_NUM);
     (*addr_con).sin_addr.s_addr = *(long*) host_entity->h_addr;
-
     return ip;
-
 }
 
 // Resolves the reverse lookup of the hostname 
@@ -129,8 +123,6 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
                    &ttl_val, sizeof(ttl_val)) != 0) {
         printf("\nSetting socket options to TTL failed !\n");
         return;
-    } else {
-        printf("\nSocket set to TTL..\n");
     }
 
     // setting timeout of recv setting
@@ -138,7 +130,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
                (const char*) &tv_out, sizeof tv_out);
 
     // send icmp packet in an infinite loop
-    while (pingloop) {
+    while (ping) {
         // flag is whether packet was sent or not
         flag = 1;
 
@@ -185,10 +177,10 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
 
             // if packet was not sent, don't receive
             if (flag) {
-                if (!(pckt.hdr.type == 69 && pckt.hdr.code == 0)) {
+                if ((pckt.hdr.type != 69 || pckt.hdr.code != 0)) {
                     printf("Error..Packet received with ICMP type %d code %d\n", pckt.hdr.type, pckt.hdr.code);
                 } else {
-                    printf("%d bytes from %s (h: %s)( %s) icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
+                    printf("%d bytes from %s (h: %s) (ip: %s) icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
                            ping_dom, rev_host, ping_ip, msg_count, ttl_val, rtt_msec);
 
                     msg_received_count++;
@@ -207,7 +199,6 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
            msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100.0, total_msec);
 }
 
-// Driver Code
 int main(int argc, char* argv[]) {
     int sockfd, time_out, ttl;
     char* ip_addr, * reverse_hostname;
