@@ -107,8 +107,8 @@ char* reverse_dns_lookup(char* ip_addr) {
 
 // make a ping request
 void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
-               char* ping_dom, char* ping_ip, char* rev_host, int time_out) {
-    int ttl_val = 64, msg_count = 0, i, addr_len, flag = 1,
+               char* ping_dom, char* ping_ip, char* rev_host, int time_out, int ttl) {
+    int ttl_val = ttl, msg_count = 0, i, addr_len, flag = 1,
             msg_received_count = 0;
 
     struct ping_pkt pckt;
@@ -172,6 +172,10 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
         if (recvfrom(ping_sockfd, &pckt, sizeof(pckt), 0, reinterpret_cast<sockaddr*> (&r_addr),
                      reinterpret_cast<socklen_t*>(&addr_len)) <= 0 && msg_count > 1) {
             printf("\nPacket receive failed!\n");
+            if (errno = EAGAIN || errno == EWOULDBLOCK) {
+                cout << "Timeout" << endl;
+                continue;
+            }
         } else {
             clock_gettime(CLOCK_MONOTONIC, &time_end);
 
@@ -181,7 +185,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
             // if packet was not sent, don't receive
             if (flag) {
                 if (!(pckt.hdr.type == 69 && pckt.hdr.code == 0)) {
-                    printf("Error..Packet received with ICMP type % code % d\n", pckt.hdr.type, pckt.hdr.code);
+                    printf("Error..Packet received with ICMP type %d code %d\n", pckt.hdr.type, pckt.hdr.code);
                 } else {
                     printf("%d bytes from %s (h: %s)( %s) icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
                            ping_dom, rev_host, ping_ip, msg_count, ttl_val, rtt_msec);
@@ -204,18 +208,26 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
 
 // Driver Code
 int main(int argc, char* argv[]) {
-    int sockfd, time_out;
+    int sockfd, time_out, ttl;
     char* ip_addr, * reverse_hostname;
     struct sockaddr_in addr_con;
 
-    if (argc != 2 && argc != 3) {
+    if (argc < 2 || argc > 4) {
         cout << "Format " << argv[0] << " <hostname or IP address> <optional: timeout in seconds>" << endl;
         return 0;
     }
-    time_out = 1;
+    // default timeout is 1 second
+    time_out = 1000000;
+
     if (argc == 3) {
         time_out = atoi(argv[2]);
         cout << "time: " << time_out << endl;
+    }
+
+    // default ttl is 64
+    ttl = 64;
+    if (argc == 4) {
+        ttl = atoi(argv[3]);
     }
 
     ip_addr = dns_lookup(argv[1], &addr_con);
@@ -238,7 +250,7 @@ int main(int argc, char* argv[]) {
 
     //send pings continuously
     send_ping(sockfd, &addr_con, reverse_hostname,
-              ip_addr, argv[1], time_out);
+              ip_addr, argv[1], time_out, ttl);
 
     return 0;
 } 
