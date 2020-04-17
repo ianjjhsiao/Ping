@@ -172,7 +172,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
         if (recvfrom(ping_sockfd, &pckt, sizeof(pckt), 0, reinterpret_cast<sockaddr*> (&r_addr),
                      reinterpret_cast<socklen_t*>(&addr_len)) <= 0 && msg_count > 1) {
             printf("\nPacket receive failed!\n");
-            if (errno = EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 cout << "Timeout" << endl;
                 continue;
             }
