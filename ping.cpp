@@ -203,7 +203,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     total_msec = (tfe.tv_sec - tfs.tv_sec) * 1000.0 + timeElapsed;
 
     printf("\n===%s ping statistics===\n", ping_ip);
-    printf("\n%d packets sent, %d packets received, %f percent packet loss.Total time: %Lf ms.\n\n ", msg_count,
+    printf("\n%d packets sent, %d packets received, %0.2f percent packet loss. Total time: %Lf ms.\n\n ", msg_count,
            msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100.0, total_msec);
 }
 
