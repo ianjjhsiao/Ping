@@ -1,4 +1,4 @@
-C++ program that implements Ping
+C++ program that mimics Ping
 
 Usage: run make first then "sudo ./ping \<hostname or ip address\> \<optional: timeout in seconds\> \<optional: ttl\>"
 
