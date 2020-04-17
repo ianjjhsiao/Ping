@@ -116,8 +116,9 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     struct timespec time_start, time_end, tfs, tfe;
     long double rtt_msec = 0, total_msec = 0;
     struct timeval tv_out;
-    tv_out.tv_sec = time_out;
-    tv_out.tv_usec = 0;
+//    tv_out.tv_sec = time_out;
+
+    tv_out.tv_usec = time_out;
 
     clock_gettime(CLOCK_MONOTONIC, &tfs);
 
@@ -146,7 +147,7 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
         pckt.hdr.type = ICMP_ECHO;
         pckt.hdr.un.echo.id = getpid();
 
-        for (i = 0; i < sizeof(pckt.msg) - 1; i++) {
+        for (i = 0; i < (signed int) (sizeof(pckt.msg) - 1); i++) {
             pckt.msg[i] = i + '0';
         }
 
@@ -226,7 +227,7 @@ int main(int argc, char* argv[]) {
     reverse_hostname = reverse_dns_lookup(ip_addr);
     cout << "\nTrying to connect to '" << argv[1] << "' IP: " << ip_addr << endl;
 
-    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
+    sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
         printf("\nSocket file descriptor not received!!\n");
         return 0;
