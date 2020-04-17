@@ -1,4 +1,3 @@
-Ian Hsiao
 C++ program that implements Ping
 
 Usage: run make first then "sudo ./ping \<hostname or ip address\>"
