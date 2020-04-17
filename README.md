@@ -4,3 +4,5 @@ Usage: run make first then "sudo ./ping \<hostname or ip address\> \<optional: t
 
 The program requires root permissions because it uses raw sockets, which are low level sockets that allow for
 reading anything received. Naturally, this is dangerous for a normal user to have access to since it would allow for reading data that is intended for other applications/users, thus requiring root permissions.
+
+Note: runs on linux but not on my Mac, research online points to the <netinet/ip_icmp.h> library having different contents between mac and linux.
