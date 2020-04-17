@@ -237,9 +237,6 @@ int main(int argc, char* argv[]) {
     }
 
     signal(SIGINT, intHandler); //catches interrupt
-    while (pingloop) {
-        cout << "hello" << endl;
-    }
 
     //send pings continuously
     send_ping(sockfd, &addr_con, reverse_hostname,
