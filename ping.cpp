@@ -116,14 +116,14 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     struct timespec time_start, time_end, tfs, tfe;
     long double rtt_msec = 0, total_msec = 0;
     struct timeval tv_out;
-//    tv_out.tv_sec = time_out;
+    tv_out.tv_sec = time_out;
 
-    tv_out.tv_usec = time_out;
+//    tv_out.tv_usec = time_out;
 
     clock_gettime(CLOCK_MONOTONIC, &tfs);
 
 
-    // set socket options at ip to TTL and value to 64,
+    // set socket options at ip to TTL and value to ttl,
     // change to what you want by setting ttl_val
     if (setsockopt(ping_sockfd, SOL_IP, IP_TTL,
                    &ttl_val, sizeof(ttl_val)) != 0) {
@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     // default timeout is 1 second
-    time_out = 1000000;
+    time_out = 1;
 
     if (argc == 3) {
         time_out = atoi(argv[2]);
