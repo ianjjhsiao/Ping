@@ -13,6 +13,7 @@
 #include <ctime>
 #include <netinet/ip_icmp.h>
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -101,10 +102,13 @@ char* reverse_dns_lookup(char* ip_addr) {
 
 // make a ping request
 void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
-               char* ping_dom, char* ping_ip, char* rev_host, int time_out, int ttl) {
+               char* ping_ip, int time_out, int ttl) {
     int ttl_val = ttl, msg_count = 0, i, addr_len, flag = 1,
             msg_received_count = 0;
-
+    // used to calc stats at the end
+    float min, max, avg, sum_sq = 0;
+    // checks if it is the first ping
+    int first = 1;
     struct ping_pkt pckt;
     struct sockaddr_in r_addr;
     struct timespec time_start, time_end, tfs, tfe;
@@ -180,6 +184,19 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
                 if ((pckt.hdr.type != 69 || pckt.hdr.code != 0)) {
                     printf("Error..Packet received with ICMP type %d code %d\n", pckt.hdr.type, pckt.hdr.code);
                 } else {
+                    if (first) {
+                        first = 0;
+                        min, max = rtt_msec;
+                    } else {
+                        if (rtt_msec > max) {
+                            max = rtt_msec;
+                        }
+                        if (rtt_msec < min) {
+                            min = rtt_msec;
+                        }
+                    }
+                    avg = (avg + rtt_msec) / msg_count;
+                    sum_sq += rtt_msec * rtt_msec;
                     printf("%d bytes from %s icmp_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_SIZE,
                            ping_ip, msg_count, ttl_val, rtt_msec);
 
@@ -195,8 +212,10 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
     total_msec = (tfe.tv_sec - tfs.tv_sec) * 1000.0 + timeElapsed;
 
     printf("\n===%s ping statistics===\n", ping_ip);
-    printf("\n%d packets sent, %d packets received, %0.2f percent packet loss. Total time: %Lf ms.\n\n ", msg_count,
+    printf("\n%d packets sent, %d packets received, %0.2f %% packet loss. Total time: %Lf ms.\n\n ", msg_count,
            msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100.0, total_msec);
+    printf("round-trip min/avg/max/stddev = %0.3f/%0.3f/%0.3f/%0.3f ms\n", min, avg, max,
+           sqrt(sum_sq / msg_count - (avg * avg)));
 }
 
 int main(int argc, char* argv[]) {
@@ -230,11 +249,11 @@ int main(int argc, char* argv[]) {
     }
 
     domain_name = reverse_dns_lookup(ip_addr);
-    cout << "\nTrying to connect to '" << argv[1] << endl;
+    cout << "\nTrying to connect to '" << argv[1] << endl << endl;
 
     // print other info
 
-    cout << "IP: " << ip_addr << " domain name: " << domain_name << endl;
+    cout << "IP: " << ip_addr << " Domain Name: " << domain_name << endl << endl;
 
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
@@ -246,8 +265,7 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, intHandler);
 
     //send pings continuously
-    send_ping(sockfd, &addr_con, domain_name, ip_addr,
-              argv[1], time_out, ttl);
+    send_ping(sockfd, &addr_con, ip_addr, time_out, ttl);
 
     return 0;
 } 
