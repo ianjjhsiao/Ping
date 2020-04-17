@@ -186,7 +186,8 @@ void send_ping(int ping_sockfd, struct sockaddr_in* ping_addr,
                 } else {
                     if (first) {
                         first = 0;
-                        min, max = rtt_msec;
+                        min = rtt_msec;
+                        max = rtt_msec;
                     } else {
                         if (rtt_msec > max) {
                             max = rtt_msec;
