@@ -92,7 +92,6 @@ char* reverse_dns_lookup(char* ip_addr) {
 
     if (getnameinfo((struct sockaddr*) &temp_addr, len, buf,
                     sizeof(buf), NULL, 0, NI_NAMEREQD)) {
-        printf("\nCould not resolve reverse lookup of hostname\n");
         return NULL;
     }
     ret_buf = (char*) malloc((strlen(buf) + 1) * sizeof(char));
@@ -247,11 +246,14 @@ int main(int argc, char* argv[]) {
     ip_addr = dns_lookup(argv[1], &addr_con);
     if (ip_addr == NULL) {
         cout << ("\nDNS lookup failed! Could not resolve hostname!\n");
-        ping = 0;
         return 0;
     }
 
     domain_name = reverse_dns_lookup(ip_addr);
+    if (domain_name == NULL) {
+        printf("\nCould not resolve reverse lookup of hostname\n");
+        return 0;
+    }
     cout << "\nTrying to connect to '" << argv[1] << endl << endl;
 
     // print other info
@@ -261,7 +263,6 @@ int main(int argc, char* argv[]) {
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
         printf("\nSocket file descriptor not received!!\n");
-        ping = 0;
         return 0;
     }
 
